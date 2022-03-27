@@ -1,5 +1,6 @@
 package pro.furry.furbot.annotation;
 
+import pro.furry.furbot.type.ReceiveQueryType;
 import pro.furry.furbot.type.ReceiveType;
 
 import java.lang.annotation.ElementType;
@@ -16,4 +17,5 @@ import java.lang.annotation.Target;
 public @interface Receive {
     ReceiveType type() default ReceiveType.None;
     String msg() default "";
+    ReceiveQueryType query() default ReceiveQueryType.Equal;
 }

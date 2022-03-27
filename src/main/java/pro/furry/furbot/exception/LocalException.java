@@ -16,4 +16,8 @@ public class LocalException extends RuntimeException {
     public LocalException(ErrorType errorType) {
         super(errorType.getMsg());
     }
+
+    public LocalException(String msg, Exception e) {
+        super(msg, e);
+    }
 }

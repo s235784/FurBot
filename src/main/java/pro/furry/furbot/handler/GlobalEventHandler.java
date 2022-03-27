@@ -10,8 +10,11 @@ import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import pro.furry.furbot.annotation.Receive;
+import pro.furry.furbot.exception.LocalException;
 import pro.furry.furbot.type.ReceiveType;
+import pro.furry.furbot.pojo.ReceiveParameter;
 import pro.furry.furbot.util.ReceiveReflectUtil;
+import pro.furry.furbot.util.RegexUtil;
 import pro.furry.furbot.util.SpringContextUtil;
 
 import java.lang.reflect.Method;
@@ -27,30 +30,45 @@ public class GlobalEventHandler extends SimpleListenerHost {
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception) {
         // 处理事件处理时抛出的异常
-        log.error(exception.toString());
         exception.printStackTrace();
     }
 
     @NotNull
     @EventHandler
     public ListeningStatus onMessage(@NotNull MessageEvent event) throws Exception {
-        log.info("onMessage");
+        log.info("onMessage" + event.getSubject().getId());
         for (Object[] objects : ReceiveReflectUtil.getReceiveMethods()) {
             Method method = (Method) objects[0];
+            String content = event.getMessage().contentToString();
             Receive annotation = method.getAnnotation(Receive.class);
-            if (event.getMessage().contentToString().equals(annotation.msg())) {
-                if (event.getSubject() instanceof Group && annotation.type() == ReceiveType.Group) {
-                    invokeMethod((Class<?>) objects[1], method, event);
-                } else if (event.getSubject() instanceof User && annotation.type() == ReceiveType.User) {
-                    invokeMethod((Class<?>) objects[1], method, event);
-                }
+            switch (annotation.query()) {
+                case Equal:
+                    if (content.equals(annotation.msg()))
+                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                    break;
+                case Front:
+                    if (RegexUtil.matchTextAfterText(content, annotation.msg()))
+                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                    break;
+                case Behind:
+                    // todo
+                    break;
             }
-
         }
         return ListeningStatus.LISTENING; // 继续监听事件 ListeningStatus.STOPPED 停止监听
     }
 
-    private void invokeMethod(Class<?> clazz, Method method, MessageEvent event) throws Exception {
+    private void checkReceiveType(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
+            throws Exception {
+        if (event.getSubject() instanceof Group && annotation.type() == ReceiveType.Group) {
+            invokeMethod(clazz, method, event, annotation);
+        } else if (event.getSubject() instanceof User && annotation.type() == ReceiveType.User) {
+            invokeMethod(clazz, method, event, annotation);
+        }
+    }
+
+    private void invokeMethod(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
+            throws Exception {
         log.info("Invoke " + method.getName() + "()");
         Parameter[] parameters = method.getParameters();
         final int length = parameters.length;
@@ -58,15 +76,29 @@ public class GlobalEventHandler extends SimpleListenerHost {
             Object[] args = new Object[length];
             for (int index = 0; index < length; index++) {
                 Parameter parameter = parameters[index];
-                if (parameter.getParameterizedType().getClass().isInstance(MessageEvent.class)) {
+                Class<?> aClazz = (Class<?>) parameter.getParameterizedType();
+                if (MessageEvent.class.isAssignableFrom(aClazz)) {
                     args[index] = event;
+                } else if (ReceiveParameter.class.isAssignableFrom(aClazz)) {
+                    String context = event.getMessage().contentToString();
+                    args[index] = ReceiveParameter.getParameterFromContext(context, annotation.msg());
                 } else {
                     args[index] = null;
                 }
             }
-            method.invoke(SpringContextUtil.getBean(clazz), args);
+            try {
+                method.invoke(SpringContextUtil.getBean(clazz), args);
+            } catch (LocalException e) {
+                log.info(e.getMessage());
+                event.getSubject().sendMessage(e.getMessage());
+            }
         } else {
-            method.invoke(SpringContextUtil.getBean(clazz));
+            try {
+                method.invoke(SpringContextUtil.getBean(clazz));
+            } catch (LocalException e) {
+                log.info(e.getMessage());
+                event.getSubject().sendMessage(e.getMessage());
+            }
         }
     }
 }

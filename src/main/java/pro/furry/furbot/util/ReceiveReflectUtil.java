@@ -2,7 +2,7 @@ package pro.furry.furbot.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Controller;
 import pro.furry.furbot.annotation.Receive;
 import pro.furry.furbot.exception.LocalException;
 
@@ -25,8 +25,8 @@ public class ReceiveReflectUtil {
     public static void scanReceiveMethods() {
         log.info("Start to scan Receive");
         receiveMethods = new ArrayList<>();
-        Reflections reflections = new Reflections("pro.furry.furbot.service");
-        Set<Class<?>> classSet = reflections.get(SubTypes.of(TypesAnnotated.with(Service.class)).asClass());
+        Reflections reflections = new Reflections("pro.furry.furbot.controller");
+        Set<Class<?>> classSet = reflections.get(SubTypes.of(TypesAnnotated.with(Controller.class)).asClass());
         for (Class<?> clazz : classSet) {
             Method[] methods = clazz.getDeclaredMethods();
             for (Method method : methods) {

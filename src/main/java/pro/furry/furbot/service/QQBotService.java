@@ -1,11 +1,11 @@
-package pro.furry.furbot.pojo;
+package pro.furry.furbot.service;
 
 import lombok.extern.slf4j.Slf4j;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import pro.furry.furbot.handler.GlobalEventHandler;
 
 import java.io.File;
@@ -15,8 +15,8 @@ import java.io.File;
  * @date 2022/3/20
  */
 @Slf4j
-@Component
-public class QQBot {
+@Service
+public class QQBotService {
     @Value("${bot.number}")
     private Long number;
     @Value("${bot.password}")
