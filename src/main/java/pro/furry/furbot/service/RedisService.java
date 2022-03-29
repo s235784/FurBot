@@ -49,6 +49,15 @@ public class RedisService {
         return redisUtil.hasKey(getFormatKey(bId, RedisActionType.Group_Got_Picture, gId));
     }
 
+    public void cacheGroupSearchedPicture(Long bId, Long gId) {
+        log.info("Set GroupSearchPicture Cache:" + gId);
+        redisUtil.set(getFormatKey(bId, RedisActionType.Group_Searched_Picture, gId), null, 60*10);
+    }
+
+    public boolean isGroupSearchedPicture(Long bId, Long gId) {
+        return redisUtil.hasKey(getFormatKey(bId, RedisActionType.Group_Searched_Picture, gId));
+    }
+
     public String getHashItem(String key, String item) {
         return String.valueOf(redisUtil.hashGet(key, item));
     }

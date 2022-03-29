@@ -2,13 +2,15 @@ package pro.furry.furbot.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.PlainText;
+import net.mamoe.mirai.message.data.SingleMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import pro.furry.furbot.annotation.Receive;
-import pro.furry.furbot.service.PixivService;
-import pro.furry.furbot.service.RedisService;
+import pro.furry.furbot.service.*;
 import pro.furry.furbot.type.ReceiveQueryType;
 import pro.furry.furbot.type.ReceiveType;
 import pro.furry.furbot.util.PublicUtil;
@@ -28,6 +30,9 @@ public class GroupController {
 
     private PixivService pixivService;
     private RedisService redisService;
+    private SauceService sauceService;
+    private SuAdminService suAdminService;
+    private GroupSettingService groupSettingService;
 
     @Autowired
     public void setPixivService(PixivService pixivService) {
@@ -39,9 +44,46 @@ public class GroupController {
         this.redisService = redisService;
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/help")
+    @Autowired
+    public void setSauceService(SauceService sauceService) {
+        this.sauceService = sauceService;
+    }
+
+    @Autowired
+    public void setSuAdminService(SuAdminService suAdminService) {
+        this.suAdminService = suAdminService;
+    }
+
+    @Autowired
+    public void setGroupSettingService(GroupSettingService groupSettingService) {
+        this.groupSettingService = groupSettingService;
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/帮助")
     public void showFunMenu(MessageEvent event) {
         event.getSubject().sendMessage("received Group");
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/搜图", query = ReceiveQueryType.Contain)
+    public void searchPicture(MessageEvent event) {
+        MessageChain chain = event.getMessage();
+        Image image = null;
+        for (SingleMessage message : chain) {
+            if (message instanceof Image) {
+                image = (Image) message;
+                break;
+            }
+        }
+        if (image == null) {
+            event.getSubject().sendMessage("请随命令附带一张要搜索的图片");
+            return;
+        }
+        if (image.isEmoji()) {
+            event.getSubject().sendMessage("图片格式不正确");
+            return;
+        }
+
+        sauceService.searchSauce(event, image);
     }
 
     @Receive(type = ReceiveType.Group, msg = "/来张涩图")
@@ -103,7 +145,21 @@ public class GroupController {
         }
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/about")
+    @Receive(type = ReceiveType.Group, msg = "/设置", query = ReceiveQueryType.Front)
+    public void setSetting(MessageEvent event, ReceiveParameter receiveParameter) {
+        String[] parameters = receiveParameter.getParameters();
+        if (parameters.length != 2) {
+            event.getSubject().sendMessage("格式错误！");
+            return;
+        }
+        if (suAdminService.isSuperAdmin(event.getSender().getId())) {
+            groupSettingService.changeGroupSetting(event, parameters[0], parameters[1]);
+        } else {
+            event.getSubject().sendMessage("权限不足");
+        }
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/关于")
     public void showAbout(MessageEvent event) {
         event.getSubject().sendMessage(new PlainText("关于FurBot\n" +
                 "当前版本 " + appVersion +"\n" +

@@ -8,16 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pro.furry.furbot.exception.LocalException;
-import pro.furry.furbot.mapper.ApiSettingMapper;
-import pro.furry.furbot.mapper.GlobalSettingMapper;
-import pro.furry.furbot.mapper.GroupSettingPixivMapper;
-import pro.furry.furbot.mapper.PixivMemberMapper;
-import pro.furry.furbot.pojo.db.ApiSetting;
-import pro.furry.furbot.pojo.db.GlobalSetting;
-import pro.furry.furbot.pojo.db.GroupSettingPixiv;
-import pro.furry.furbot.pojo.db.PixivMember;
+import pro.furry.furbot.mapper.*;
+import pro.furry.furbot.pojo.db.*;
 import pro.furry.furbot.type.ApiType;
 import pro.furry.furbot.type.GlobalSettingType;
+import pro.furry.furbot.type.GroupSettingType;
 import pro.furry.furbot.util.PublicUtil;
 
 import java.util.List;
@@ -32,6 +27,7 @@ public class DBService {
 
     private ApiSettingMapper apiSettingMapper;
     private PixivMemberMapper pixivMemberMapper;
+    private GroupSettingMapper groupSettingMapper;
     private GlobalSettingMapper globalSettingMapper;
     private GroupSettingPixivMapper groupSettingPixivMapper;
 
@@ -43,6 +39,11 @@ public class DBService {
     @Autowired
     public void setPixivMemberMapper(PixivMemberMapper pixivMemberMapper) {
         this.pixivMemberMapper = pixivMemberMapper;
+    }
+
+    @Autowired
+    public void setGroupSettingMapper(GroupSettingMapper groupSettingMapper) {
+        this.groupSettingMapper = groupSettingMapper;
     }
 
     @Autowired
@@ -64,10 +65,10 @@ public class DBService {
         member.setPixivName(name);
         QueryWrapper<PixivMember> pixivMemberQueryWrapper = new QueryWrapper<>();
         pixivMemberQueryWrapper.eq("pixiv_id", pId);
-        if (!pixivMemberMapper.exists(pixivMemberQueryWrapper)) {
-            pixivMemberMapper.insert(member);
-        } else {
+        if (pixivMemberMapper.exists(pixivMemberQueryWrapper)) {
             pixivMemberMapper.update(member, pixivMemberQueryWrapper);
+        } else {
+            pixivMemberMapper.insert(member);
         }
 
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
@@ -88,12 +89,24 @@ public class DBService {
         return groupSettingPixivMapper.exists(groupSettingPixivQueryWrapper);
     }
 
+    public boolean isGroupHasPMember(Long gId) {
+        QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
+        groupSettingPixivQueryWrapper.eq("group_id", gId);
+        return groupSettingPixivMapper.exists(groupSettingPixivQueryWrapper);
+    }
+
     public Long getRandPMember(Long gId) {
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
         groupSettingPixivQueryWrapper.eq("group_id", gId);
         List<GroupSettingPixiv> list = groupSettingPixivMapper.selectList(groupSettingPixivQueryWrapper);
         int randIndex = PublicUtil.getRandInt(0, list.size() - 1);
         return list.get(randIndex).getPixivId();
+    }
+
+    public Long getPMemberCount(Long gId) {
+        QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
+        groupSettingPixivQueryWrapper.eq("group_id", gId);
+        return groupSettingPixivMapper.selectCount(groupSettingPixivQueryWrapper);
     }
 
     public String getApiURL(@NotNull ApiType apiName) throws LocalException {
@@ -165,6 +178,34 @@ public class DBService {
             globalSettingMapper.update(globalSetting, globalSettingQueryWrapper);
         } else {
             globalSettingMapper.insert(globalSetting);
+        }
+    }
+
+    public String getGroupSetting(Long gId, @NotNull GroupSettingType setting) {
+        QueryWrapper<GroupSetting> groupSettingQueryWrapper = new QueryWrapper<>();
+        groupSettingQueryWrapper.eq("group_id", String.valueOf(gId))
+                .eq("setting_name", setting.getSettingName());
+        GroupSetting groupSetting = groupSettingMapper.selectOne(groupSettingQueryWrapper);
+        if (groupSetting == null || groupSetting.getSettingValue() == null) {
+            return setting.getDefaultValue();
+        } else {
+            return groupSetting.getSettingValue();
+        }
+    }
+
+    public void setGroupSetting(Long gId, @NotNull GroupSettingType setting, String value) {
+        log.info("Set GroupSetting, Name: " + setting.getSettingName() + ", Value: " + value);
+        QueryWrapper<GroupSetting> groupSettingQueryWrapper = new QueryWrapper<>();
+        groupSettingQueryWrapper.eq("group_id", String.valueOf(gId))
+                .eq("setting_name", setting.getSettingName());
+        GroupSetting groupSetting = new GroupSetting();
+        groupSetting.setGroupId(String.valueOf(gId));
+        groupSetting.setSettingName(setting.getSettingName());
+        groupSetting.setSettingValue(value);
+        if (groupSettingMapper.exists(groupSettingQueryWrapper)) {
+            groupSettingMapper.update(groupSetting, groupSettingQueryWrapper);
+        } else {
+            groupSettingMapper.insert(groupSetting);
         }
     }
 }

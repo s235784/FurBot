@@ -10,7 +10,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum RefererType {
-    PIXIV("https://www.pixiv.net/");
+    None(""),
+    PIXIV("https://www.pixiv.net/"),
+    FurBot("https://furbot.furry.pro/");
 
     private final String referer;
 }

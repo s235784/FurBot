@@ -62,8 +62,13 @@ public class PixivService {
             return;
         }
 
-        Long pid = dbService.getRandPMember(gId);
-        Map<String, String> data = httpService.getRandPMemberWork(pid);
+        if (!dbService.isGroupHasPMember(gId)) {
+            event.getSubject().sendMessage("请先添加一个画师再请求");
+            return;
+        }
+
+        Long pId = dbService.getRandPMember(gId);
+        Map<String, String> data = httpService.getRandPMemberWork(gId, pId, 1);
         String lid = data.get("id");
         String title = data.get("title");
         String username = data.get("username");
@@ -71,13 +76,13 @@ public class PixivService {
         String type = data.get("type");
 
         InputStream imageStream = httpService.getPictureFromFurBotAPI(imageURL, RefererType.PIXIV);
-        log.info("Start to send Message");
         ExternalResource resource;
         try {
             resource = ExternalResource.Companion.create(imageStream);
         } catch (IOException e) {
             throw new LocalException("读取图片时发生错误", e);
         }
+        log.info("Start to Send Message");
         Image image = ExternalResource.uploadAsImage(resource, event.getSubject());
         MessageChain chain = new MessageChainBuilder()
                 .append(new PlainText("[" + type + "]\n"))
@@ -88,9 +93,10 @@ public class PixivService {
                 .build();
         event.getSubject().sendMessage(chain);
         try {
+            imageStream.close();
             resource.close();
         } catch (IOException e) {
-            throw new LocalException("关闭ExternalResource时发生错误", e);
+            throw new LocalException("关闭资源时发生错误", e);
         }
 
         if (!suAdminService.isSuperAdmin(sId)) {
@@ -112,13 +118,13 @@ public class PixivService {
         String avatarUrl = data.get("avatarUrl");
 
         InputStream imageStream = httpService.getPictureFromFurBotAPI(avatarUrl, RefererType.PIXIV);
-        log.info("Start to send Message");
         ExternalResource resource;
         try {
             resource = ExternalResource.Companion.create(imageStream);
         } catch (IOException e) {
             throw new LocalException("读取图片时发生错误", e);
         }
+        log.info("Start to Send Message");
         Image image = ExternalResource.uploadAsImage(resource, event.getSubject());
         MessageChain chain = new MessageChainBuilder()
                 .append(new PlainText("请确认画师信息\n"))
@@ -130,9 +136,10 @@ public class PixivService {
                 .build();
         event.getSubject().sendMessage(chain);
         try {
+            imageStream.close();
             resource.close();
         } catch (IOException e) {
-            throw new LocalException("关闭ExternalResource时发生错误", e);
+            throw new LocalException("关闭资源时发生错误", e);
         }
 
         Map<String, Object> cache = new HashMap<>();
@@ -175,6 +182,7 @@ public class PixivService {
             return;
         }
 
+        log.info("Start to Send Message");
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("画师列表\n----- 第")
                 .append(String.valueOf(result.getCurrent()))

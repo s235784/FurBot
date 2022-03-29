@@ -17,4 +17,9 @@ public class RegexUtil {
         return Pattern.matches(pattern, text);
     }
 
+    public static boolean matchTextContainText(String text, String containText) {
+        String pattern = containText + "[\\s\\S]*";
+        return Pattern.matches(pattern, text);
+    }
+
 }

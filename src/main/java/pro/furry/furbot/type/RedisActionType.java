@@ -12,7 +12,8 @@ import lombok.Getter;
 public enum RedisActionType {
     Unknown_Action("*"),
     Unconfirmed_Pixiv_Member("UCPM"),
-    Group_Got_Picture("GGP");
+    Group_Got_Picture("GGP"),
+    Group_Searched_Picture("GSP");
 
     private final String actionName;
 }

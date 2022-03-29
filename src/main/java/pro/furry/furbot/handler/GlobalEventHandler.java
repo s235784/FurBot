@@ -17,6 +17,7 @@ import pro.furry.furbot.util.ReceiveReflectUtil;
 import pro.furry.furbot.util.RegexUtil;
 import pro.furry.furbot.util.SpringContextUtil;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
@@ -36,7 +37,6 @@ public class GlobalEventHandler extends SimpleListenerHost {
     @NotNull
     @EventHandler
     public ListeningStatus onMessage(@NotNull MessageEvent event) throws Exception {
-        log.info("onMessage" + event.getSubject().getId());
         for (Object[] objects : ReceiveReflectUtil.getReceiveMethods()) {
             Method method = (Method) objects[0];
             String content = event.getMessage().contentToString();
@@ -52,6 +52,10 @@ public class GlobalEventHandler extends SimpleListenerHost {
                     break;
                 case Behind:
                     // todo
+                    break;
+                case Contain:
+                    if (RegexUtil.matchTextContainText(content, annotation.msg()))
+                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
                     break;
             }
         }
@@ -69,7 +73,7 @@ public class GlobalEventHandler extends SimpleListenerHost {
 
     private void invokeMethod(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
             throws Exception {
-        log.info("Invoke " + method.getName() + "()");
+        log.info("Invoke " + method.getName() + "(), Group: " + event.getSubject().getId());
         Parameter[] parameters = method.getParameters();
         final int length = parameters.length;
         if (length > 0) {
@@ -88,16 +92,24 @@ public class GlobalEventHandler extends SimpleListenerHost {
             }
             try {
                 method.invoke(SpringContextUtil.getBean(clazz), args);
-            } catch (LocalException e) {
-                log.info(e.getMessage());
-                event.getSubject().sendMessage(e.getMessage());
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof LocalException) {
+                    log.error(e.getCause().getMessage());
+                    event.getSubject().sendMessage(e.getCause().getMessage());
+                } else {
+                    throw e;
+                }
             }
         } else {
             try {
                 method.invoke(SpringContextUtil.getBean(clazz));
             } catch (LocalException e) {
-                log.info(e.getMessage());
-                event.getSubject().sendMessage(e.getMessage());
+                if (e.getCause() instanceof LocalException) {
+                    log.error(e.getCause().getMessage());
+                    event.getSubject().sendMessage(e.getCause().getMessage());
+                } else {
+                    throw e;
+                }
             }
         }
     }

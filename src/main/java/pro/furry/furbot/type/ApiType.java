@@ -12,6 +12,7 @@ import lombok.Getter;
 public enum ApiType {
     Hibi_Pixiv_Member("hibi_pixiv_member"),
     Hibi_Pixiv_Member_Illust("hibi_pixiv_member_illust"),
+    Hibi_Sauce_From("hibi_sauce_from"),
     Bot_Picture("bot_picture");
     private final String api_name;
 }
