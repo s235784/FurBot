@@ -13,6 +13,8 @@ public class ReceiveParameter {
     private String[] Parameters;
 
     public static ReceiveParameter getParameterFromContext(String context, String frontText) {
-        return new ReceiveParameter(context.replace(frontText, "").trim().split(" "));
+        String str = context.replace(frontText, "").trim();
+        String[] parameters = str.isEmpty() ? null : str.split(" ");
+        return new ReceiveParameter(parameters);
     }
 }

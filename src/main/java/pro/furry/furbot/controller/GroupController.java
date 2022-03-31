@@ -1,11 +1,9 @@
 package pro.furry.furbot.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.Image;
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.PlainText;
-import net.mamoe.mirai.message.data.SingleMessage;
+import net.mamoe.mirai.message.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -86,9 +84,23 @@ public class GroupController {
         sauceService.searchSauce(event, image);
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/来张涩图")
-    public void sendIllustration(MessageEvent event) {
-        pixivService.sendRandPicture(event);
+    @Receive(type = ReceiveType.Group, msg = "/来张涩图", query = ReceiveQueryType.EqualOrFront)
+    public void sendIllustration(MessageEvent event, ReceiveParameter parameter) {
+        String[] parameters = parameter.getParameters();
+        if (parameters == null || parameters.length == 0) {
+            pixivService.sendRandPicture(event);
+            return;
+        }
+        if (parameters.length > 1) {
+            event.getSubject().sendMessage("只能有一个参数");
+            return;
+        }
+        Long pid = PublicUtil.parseLong(parameters[0]);
+        if (pid == null) {
+            event.getSubject().sendMessage("参数只能是数字");
+            return;
+        }
+        pixivService.sendSpecificPicture(event, pid);
     }
 
     @Receive(type = ReceiveType.Group, msg = "/添加画师", query = ReceiveQueryType.Front)
@@ -143,6 +155,28 @@ public class GroupController {
         if (redisService.isUnconfirmedPMember(key, event.getBot().getId(), event.getSender().getId())) {
             pixivService.cancelPixivMember(event, key);
         }
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/留言", query = ReceiveQueryType.Front)
+    public void send(MessageEvent event) {
+        Long admin = suAdminService.getSuperAdmin();
+        if (admin == null) {
+            event.getSubject().sendMessage("向管理员发送消息时发生错误：管理员账号未配置");
+            return;
+        }
+        Contact contact = event.getBot().getFriend(admin);
+        if (contact == null) {
+            event.getSubject().sendMessage("向管理员发送消息时发生错误：找不到管理员");
+            return;
+        }
+        MessageChainBuilder chainBuilder = new MessageChainBuilder()
+                .append("您有一条新的留言 来自\n群聊：")
+                .append(String.valueOf(event.getSubject().getId()))
+                .append("用户：")
+                .append(String.valueOf(event.getSender().getId()))
+                .append("\n---------------\n")
+                .append(event.getMessage());
+        contact.sendMessage(chainBuilder.build());
     }
 
     @Receive(type = ReceiveType.Group, msg = "/设置", query = ReceiveQueryType.Front)

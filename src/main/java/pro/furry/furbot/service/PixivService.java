@@ -53,7 +53,16 @@ public class PixivService {
         this.suAdminService = suAdminService;
     }
 
+    public void sendSpecificPicture(MessageEvent event, Long pId) throws LocalException {
+        sendPicture(event, pId, true);
+    }
+
     public void sendRandPicture(MessageEvent event) throws LocalException {
+        Long pId = dbService.getRandPMember(event.getSubject().getId());
+        sendPicture(event, pId, false);
+    }
+
+    private void sendPicture(MessageEvent event, Long pId, boolean isSpecific) throws LocalException {
         Long bId = event.getBot().getId();
         Long gId = event.getSubject().getId();
         Long sId = event.getSender().getId();
@@ -67,8 +76,7 @@ public class PixivService {
             return;
         }
 
-        Long pId = dbService.getRandPMember(gId);
-        Map<String, String> data = httpService.getRandPMemberWork(gId, pId, 1);
+        Map<String, String> data = httpService.getRandPMemberWork(gId, pId, 1, isSpecific);
         String lid = data.get("id");
         String title = data.get("title");
         String username = data.get("username");

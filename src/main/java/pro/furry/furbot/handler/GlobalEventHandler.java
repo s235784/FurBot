@@ -57,6 +57,11 @@ public class GlobalEventHandler extends SimpleListenerHost {
                     if (RegexUtil.matchTextContainText(content, annotation.msg()))
                         checkReceiveType((Class<?>) objects[1], method, event, annotation);
                     break;
+                case EqualOrFront:
+                    if (content.equals(annotation.msg()) ||
+                            RegexUtil.matchTextAfterText(content, annotation.msg()))
+                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                    break;
             }
         }
         return ListeningStatus.LISTENING; // 继续监听事件 ListeningStatus.STOPPED 停止监听

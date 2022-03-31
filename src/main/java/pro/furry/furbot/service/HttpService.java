@@ -60,7 +60,8 @@ public class HttpService {
         return data;
     }
 
-    public Map<String, String> getRandPMemberWork(Long gid, Long pid, int count) throws LocalException  {
+    public Map<String, String> getRandPMemberWork(Long gid, Long pid, int count, boolean isSpecific)
+            throws LocalException  {
         log.info("Get Pixiv Member Illustration, PID: " + pid);
         Map<String, String> data = new HashMap<>();
         data.put("id", String.valueOf(pid));
@@ -71,6 +72,9 @@ public class HttpService {
             throw new LocalException("Error: " + jsonObject.getString("detail"));
         }
         JSONArray illustrations = jsonObject.getJSONArray("illusts");
+        if (illustrations == null || illustrations.isEmpty()) {
+            throw new LocalException("此用户没有作品或此用户不存在");
+        }
         int randLIndex = PublicUtil.getRandInt(0, illustrations.size() - 1);
         JSONObject illustration = illustrations.getJSONObject(randLIndex);
 
@@ -84,8 +88,13 @@ public class HttpService {
                 if (count > 3 || dbService.getPMemberCount(gid) == 1) {
                     throw new LocalException("在指定深度内找不到满足筛选条件的作品");
                 }
-                log.info("找不到满足条件的作品，重新选择画师（size = 1）");
-                return getRandPMemberWork(gid, dbService.getRandPMember(gid), count + 1);
+
+                if (isSpecific) { // 如果是指定画师的请求，找不到就直接报错
+                    throw new LocalException("此画师没有满足筛选条件的作品");
+                } else {
+                    log.info("找不到满足条件的作品，重新选择画师（size = 1）");
+                    return getRandPMemberWork(gid, dbService.getRandPMember(gid), count + 1, false);
+                }
             }
             for (int index = randLIndex + 1; index < illustrations.size(); index++) {
                 JSONObject illustrationNew = illustrations.getJSONObject(index);
@@ -96,8 +105,13 @@ public class HttpService {
                         if (count > 3 || dbService.getPMemberCount(gid) == 1) {
                             throw new LocalException("在指定深度内找不到满足筛选条件的作品");
                         }
-                        log.info("找不到满足条件的作品，重新选择画师（all r18）");
-                        return getRandPMemberWork(gid, dbService.getRandPMember(gid), count + 1);
+
+                        if (isSpecific) {
+                            throw new LocalException("此画师没有满足筛选条件的作品");
+                        } else {
+                            log.info("找不到满足条件的作品，重新选择画师（all r18）");
+                            return getRandPMemberWork(gid, dbService.getRandPMember(gid), count + 1, false);
+                        }
                     }
                 } else {
                     nsfw = false;
