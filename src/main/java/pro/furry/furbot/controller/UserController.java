@@ -7,9 +7,11 @@ import net.mamoe.mirai.message.data.MessageChainBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import pro.furry.furbot.annotation.Receive;
+import pro.furry.furbot.pojo.ReceiveParameter;
 import pro.furry.furbot.service.SuAdminService;
 import pro.furry.furbot.type.ReceiveQueryType;
 import pro.furry.furbot.type.ReceiveType;
+import pro.furry.furbot.util.PublicUtil;
 
 /**
  * @author NuoTian
@@ -26,7 +28,7 @@ public class UserController {
     }
 
     @Receive(type = ReceiveType.User, msg = "/留言", query = ReceiveQueryType.Front)
-    public void send(MessageEvent event) {
+    public void sendMessageToAdmin(MessageEvent event) {
         Long admin = suAdminService.getSuperAdmin();
         if (admin == null) {
             event.getSubject().sendMessage("向管理员发送消息时发生错误：管理员账号未配置");
@@ -37,11 +39,47 @@ public class UserController {
             event.getSubject().sendMessage("向管理员发送消息时发生错误：找不到管理员");
             return;
         }
+        log.info("收到留言消息, 来自：" + event.getSender().getId());
+        log.info("内容：" + event.getMessage().contentToString());
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("您有一条新的留言 来自\n用户：")
-                .append(String.valueOf(event.getSender()))
+                .append(String.valueOf(event.getSender().getId()))
                 .append("\n---------------\n")
                 .append(event.getMessage());
+        contact.sendMessage(chainBuilder.build());
+    }
+
+    @Receive(type = ReceiveType.User, msg = "/回复", query = ReceiveQueryType.Front)
+    public void replyMessage(MessageEvent event, ReceiveParameter parameter) {
+        Long admin = suAdminService.getSuperAdmin();
+        if (admin == null) {
+            event.getSubject().sendMessage("管理员账号未配置");
+            return;
+        }
+        if (event.getSubject().getId() != admin) {
+            event.getSubject().sendMessage("无权限");
+            return;
+        }
+        String[] parameters = parameter.getParameters();
+        if (parameters.length != 2) {
+            event.getSubject().sendMessage("参数数量不正确");
+            return;
+        }
+        Long replyId = PublicUtil.parseLong(parameters[0]);
+        if (replyId == null) {
+            event.getSubject().sendMessage("参数格式错误");
+            return;
+        }
+        Contact contact = event.getBot().getStranger(replyId);
+        if (contact == null) {
+            event.getSubject().sendMessage("无法向该用户发送消息");
+            return;
+        }
+        log.info("向用户发送回复, 用户：" + parameters[0]);
+        log.info("内容：" + parameters[1]);
+        MessageChainBuilder chainBuilder = new MessageChainBuilder()
+                .append("来自管理员的消息\n---------------\n")
+                .append(parameters[1]);
         contact.sendMessage(chainBuilder.build());
     }
 }

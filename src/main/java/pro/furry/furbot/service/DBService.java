@@ -139,7 +139,7 @@ public class DBService {
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
         groupSettingPixivQueryWrapper.eq("group_id", String.valueOf(gId));
 
-        Page<GroupSettingPixiv> groupSettingPixivPage = new Page<>(page,5);
+        Page<GroupSettingPixiv> groupSettingPixivPage = new Page<>(page,10);
         groupSettingPixivMapper.selectPage(groupSettingPixivPage, groupSettingPixivQueryWrapper);
 
         return groupSettingPixivPage;

@@ -78,7 +78,7 @@ public class GlobalEventHandler extends SimpleListenerHost {
 
     private void invokeMethod(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
             throws Exception {
-        log.info("Invoke " + method.getName() + "(), Group: " + event.getSubject().getId());
+        log.info("Invoke " + method.getName() + "(), Id: " + event.getSubject().getId());
         Parameter[] parameters = method.getParameters();
         final int length = parameters.length;
         if (length > 0) {
@@ -99,9 +99,10 @@ public class GlobalEventHandler extends SimpleListenerHost {
                 method.invoke(SpringContextUtil.getBean(clazz), args);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof LocalException) {
-                    log.error(e.getCause().getMessage());
+                    log.info(e.getCause().getMessage());
                     event.getSubject().sendMessage(e.getCause().getMessage());
                 } else {
+                    event.getSubject().sendMessage("程序运行时发生意外错误，请联系管理员");
                     throw e;
                 }
             }
@@ -110,9 +111,10 @@ public class GlobalEventHandler extends SimpleListenerHost {
                 method.invoke(SpringContextUtil.getBean(clazz));
             } catch (LocalException e) {
                 if (e.getCause() instanceof LocalException) {
-                    log.error(e.getCause().getMessage());
+                    log.info(e.getCause().getMessage());
                     event.getSubject().sendMessage(e.getCause().getMessage());
                 } else {
+                    event.getSubject().sendMessage("程序运行时发生意外错误，请联系管理员");
                     throw e;
                 }
             }

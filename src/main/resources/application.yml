@@ -13,10 +13,18 @@ spring:
     password:
     timeout: 1000
 
+server:
+  port: 23578
+  address: 127.0.0.1
+
 app:
   version: @project.version@
   build:
     time: @build.timestamp@
+
+logging:
+  level:
+    root: info
 
 bot:
   number: 1234567898

@@ -59,7 +59,17 @@ public class GroupController {
 
     @Receive(type = ReceiveType.Group, msg = "/帮助")
     public void showFunMenu(MessageEvent event) {
-        event.getSubject().sendMessage("received Group");
+        log.info("Start to Send Message");
+        MessageChainBuilder chainBuilder = new MessageChainBuilder()
+                .append("--------命令菜单--------\n")
+                .append("发送随机画师图片  /来张涩图\n")
+                .append("发送指定画师图片  /来张涩图 [画师P站ID]\n")
+                .append("向随机列表添加画师  /添加画师 [画师P站ID]\n")
+                .append("查看当前的随机列表  /画师列表\n")
+                .append("查找图片出处  /搜图 [图片]\n")
+                .append("给管理员留言  /留言 [留言内容]\n")
+                .append("查看关于信息  /关于");
+        event.getSubject().sendMessage(chainBuilder.build());
     }
 
     @Receive(type = ReceiveType.Group, msg = "/搜图", query = ReceiveQueryType.Contain)
@@ -118,14 +128,13 @@ public class GroupController {
         pixivService.addPixivMember(event, pixivId);
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/画师列表")
-    public void listPixivMemberOne(MessageEvent event) {
-        pixivService.listPixivMember(event, 1);
-    }
-
-    @Receive(type = ReceiveType.Group, msg = "/画师列表", query = ReceiveQueryType.Front)
+    @Receive(type = ReceiveType.Group, msg = "/画师列表", query = ReceiveQueryType.EqualOrFront)
     public void listPixivMember(MessageEvent event, ReceiveParameter parameter) {
         String[] parameterStrings = parameter.getParameters();
+        if (parameterStrings == null || parameterStrings.length == 0) {
+            pixivService.listPixivMember(event, 1);
+            return;
+        }
         if (parameterStrings.length != 1){
             event.getSubject().sendMessage("格式错误！");
             return;
@@ -169,6 +178,7 @@ public class GroupController {
             event.getSubject().sendMessage("向管理员发送消息时发生错误：找不到管理员");
             return;
         }
+        log.info("Start to Send Message");
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("您有一条新的留言 来自\n群聊：")
                 .append(String.valueOf(event.getSubject().getId()))
@@ -195,6 +205,7 @@ public class GroupController {
 
     @Receive(type = ReceiveType.Group, msg = "/关于")
     public void showAbout(MessageEvent event) {
+        log.info("Start to Send Message");
         event.getSubject().sendMessage(new PlainText("关于FurBot\n" +
                 "当前版本 " + appVersion +"\n" +
                 "编译时间 " + appBuildTime +"\n" +

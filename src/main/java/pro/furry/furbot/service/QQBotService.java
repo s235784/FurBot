@@ -23,6 +23,7 @@ public class QQBotService {
     private String password;
 
     public void startBot() {
+        log.info("Start QQBot Service");
         if (number == null || password == null) {
             log.error("账号或密码未配置！");
             return;
@@ -30,7 +31,7 @@ public class QQBotService {
 
         Bot bot = BotFactory.INSTANCE.newBot(number, password, new BotConfiguration() {{
             setHeartbeatStrategy(HeartbeatStrategy.STAT_HB); // 心跳策略
-            setProtocol(MiraiProtocol.ANDROID_PHONE); // 登录协议
+            setProtocol(MiraiProtocol.ANDROID_PAD); // 登录协议
             setCacheDir(new File("data/cache")); // 缓存目录
             fileBasedDeviceInfo("data/device.json"); // 设备信息
             enableContactCache(); // 启用列表缓存(默认关闭)
