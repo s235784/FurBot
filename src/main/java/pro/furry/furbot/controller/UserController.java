@@ -2,13 +2,13 @@ package pro.furry.furbot.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.UserMessageEvent;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import pro.furry.furbot.annotation.Receive;
 import pro.furry.furbot.pojo.ReceiveParameter;
-import pro.furry.furbot.service.SuAdminService;
+import pro.furry.furbot.service.AdminService;
 import pro.furry.furbot.type.ReceiveQueryType;
 import pro.furry.furbot.type.ReceiveType;
 import pro.furry.furbot.util.PublicUtil;
@@ -20,15 +20,15 @@ import pro.furry.furbot.util.PublicUtil;
 @Slf4j
 @Controller
 public class UserController {
-    private SuAdminService suAdminService;
+    private AdminService suAdminService;
 
     @Autowired
-    public void setSuAdminService(SuAdminService suAdminService) {
+    public void setSuAdminService(AdminService suAdminService) {
         this.suAdminService = suAdminService;
     }
 
     @Receive(type = ReceiveType.User, msg = "/留言", query = ReceiveQueryType.Front)
-    public void sendMessageToAdmin(MessageEvent event) {
+    public void sendMessageToAdmin(UserMessageEvent event, ReceiveParameter parameter) {
         Long admin = suAdminService.getSuperAdmin();
         if (admin == null) {
             event.getSubject().sendMessage("向管理员发送消息时发生错误：管理员账号未配置");
@@ -50,7 +50,7 @@ public class UserController {
     }
 
     @Receive(type = ReceiveType.User, msg = "/回复", query = ReceiveQueryType.Front)
-    public void replyMessage(MessageEvent event, ReceiveParameter parameter) {
+    public void replyMessage(UserMessageEvent event, ReceiveParameter parameter) {
         Long admin = suAdminService.getSuperAdmin();
         if (admin == null) {
             event.getSubject().sendMessage("管理员账号未配置");

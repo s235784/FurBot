@@ -14,7 +14,7 @@ public class ReceiveParameter {
 
     public static ReceiveParameter getParameterFromContext(String context, String frontText) {
         String str = context.replace(frontText, "").trim();
-        String[] parameters = str.isEmpty() ? null : str.split(" ");
+        String[] parameters = str.isEmpty() ? new String[]{} : str.split(" ");
         return new ReceiveParameter(parameters);
     }
 }

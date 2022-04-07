@@ -2,7 +2,7 @@ package pro.furry.furbot.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
@@ -31,7 +31,7 @@ public class PixivService {
     private DBService dbService;
     private HttpService httpService;
     private RedisService redisService;
-    private SuAdminService suAdminService;
+    private AdminService suAdminService;
 
     @Autowired
     public void setHttpService(HttpService httpService) {
@@ -49,30 +49,30 @@ public class PixivService {
     }
 
     @Autowired
-    public void setSuAdminService(SuAdminService suAdminService) {
+    public void setSuAdminService(AdminService suAdminService) {
         this.suAdminService = suAdminService;
     }
 
-    public void sendSpecificPicture(MessageEvent event, Long pId) throws LocalException {
+    public void sendSpecificPicture(GroupMessageEvent event, Long pId) throws LocalException {
         sendPicture(event, pId, true);
     }
 
-    public void sendRandPicture(MessageEvent event) throws LocalException {
+    public void sendRandPicture(GroupMessageEvent event) throws LocalException {
+        Long gId = event.getGroup().getId();
+        if (!dbService.isGroupHasPMember(gId)) {
+            event.getSubject().sendMessage("请先添加一个画师 /添加画师 [画师P站ID]");
+            return;
+        }
         Long pId = dbService.getRandPMember(event.getSubject().getId());
         sendPicture(event, pId, false);
     }
 
-    private void sendPicture(MessageEvent event, Long pId, boolean isSpecific) throws LocalException {
+    private void sendPicture(GroupMessageEvent event, Long pId, boolean isSpecific) throws LocalException {
         Long bId = event.getBot().getId();
-        Long gId = event.getSubject().getId();
+        Long gId = event.getGroup().getId();
         Long sId = event.getSender().getId();
         if (!suAdminService.isSuperAdmin(sId) && redisService.isGroupGotPicture(bId, gId)) {
             event.getSubject().sendMessage("请求太频繁了，休息一下吧");
-            return;
-        }
-
-        if (!dbService.isGroupHasPMember(gId)) {
-            event.getSubject().sendMessage("请先添加一个画师再请求");
             return;
         }
 
@@ -112,9 +112,9 @@ public class PixivService {
         }
     }
 
-    public void addPixivMember(MessageEvent event, Long pid) throws LocalException {
+    public void addPixivMember(GroupMessageEvent event, Long pid) throws LocalException {
         Long bId = event.getBot().getId();
-        Long gId = event.getSubject().getId();
+        Long gId = event.getGroup().getId();
         if (dbService.isGroupAddedPMember(gId, pid)) {
             event.getSubject().sendMessage("这位画师已经添加过啦");
             return;
@@ -158,7 +158,7 @@ public class PixivService {
         redisService.cacheUnconfirmedPMember(bId, event.getSender().getId(), cache);
     }
 
-    public void confirmPixivMember(MessageEvent event, String key) throws LocalException {
+    public void confirmPixivMember(GroupMessageEvent event, String key) throws LocalException {
         Map<Object, Object> cache = redisService.getHash(key);
         Long gId = PublicUtil.parseLong(cache.get("gId"));
         Long pId = PublicUtil.parseLong(cache.get("pId"));
@@ -172,7 +172,7 @@ public class PixivService {
         event.getSubject().sendMessage("已添加画师 " + pAccount + " (" + pId + ")");
     }
 
-    public void cancelPixivMember(MessageEvent event, String key) {
+    public void cancelPixivMember(GroupMessageEvent event, String key) {
         String pId = redisService.getHashItem(key, "pId");
         String pAccount = redisService.getHashItem(key, "pAccount");
         redisService.deleteCache(key);
@@ -181,8 +181,8 @@ public class PixivService {
         }
     }
 
-    public void listPixivMember(MessageEvent event, int page) {
-        Long gid = event.getSubject().getId();
+    public void listPixivMember(GroupMessageEvent event, int page) {
+        Long gid = event.getGroup().getId();
         Page<GroupSettingPixiv> result = dbService.getGroupPMemberByPage(gid, page);
 
         if (page > result.getPages()) {

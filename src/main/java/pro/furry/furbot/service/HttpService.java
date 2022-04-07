@@ -207,7 +207,12 @@ public class HttpService {
         map.put("thumbnail", header.getString("thumbnail"));
         map.put("title", data.getString("title"));
         map.put("author", data.getString("author_name"));
-        map.put("external", extURLs.getString(0));
+        if (extURLs != null) {
+            map.put("external", extURLs.getString(0));
+        } else {
+            map.put("external", "没有找到原链接，可以尝试前往saucenao.com再次搜索");
+        }
+
         return map;
     }
 

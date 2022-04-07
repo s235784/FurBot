@@ -1,7 +1,7 @@
 package pro.furry.furbot.service;
 
 import lombok.extern.slf4j.Slf4j;
-import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
@@ -23,7 +23,7 @@ import java.util.Map;
 public class SauceService {
     private HttpService httpService;
     private RedisService redisService;
-    private SuAdminService suAdminService;
+    private AdminService suAdminService;
 
     @Autowired
     public void setHttpService(HttpService httpService) {
@@ -36,13 +36,13 @@ public class SauceService {
     }
 
     @Autowired
-    public void setSuAdminService(SuAdminService suAdminService) {
+    public void setSuAdminService(AdminService suAdminService) {
         this.suAdminService = suAdminService;
     }
 
-    public void searchSauce(MessageEvent event, Image image) {
+    public void searchSauce(GroupMessageEvent event, Image image) {
         Long bId = event.getBot().getId();
-        Long gId = event.getSubject().getId();
+        Long gId = event.getGroup().getId();
         Long sId = event.getSender().getId();
         if (!suAdminService.isSuperAdmin(sId) && redisService.isGroupSearchedPicture(bId, gId)) {
             event.getSubject().sendMessage("请求太频繁了，休息一下吧");

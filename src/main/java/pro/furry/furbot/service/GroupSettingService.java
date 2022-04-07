@@ -1,7 +1,7 @@
 package pro.furry.furbot.service;
 
 import lombok.extern.slf4j.Slf4j;
-import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pro.furry.furbot.type.GroupSettingType;
@@ -20,8 +20,8 @@ public class GroupSettingService {
         this.dbService = dbService;
     }
 
-    public void changeGroupSetting(MessageEvent event, String name, String value) {
-        Long gid = event.getSubject().getId();
+    public void changeGroupSetting(GroupMessageEvent event, String name, String value) {
+        Long gid = event.getGroup().getId();
         GroupSettingType type = GroupSettingType.getInstance(name);
         if (type == null) {
             event.getSubject().sendMessage("没有这个设置呢");

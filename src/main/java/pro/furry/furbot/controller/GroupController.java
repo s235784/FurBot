@@ -2,7 +2,7 @@ package pro.furry.furbot.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.message.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +29,7 @@ public class GroupController {
     private PixivService pixivService;
     private RedisService redisService;
     private SauceService sauceService;
-    private SuAdminService suAdminService;
+    private AdminService suAdminService;
     private GroupSettingService groupSettingService;
 
     @Autowired
@@ -48,7 +48,7 @@ public class GroupController {
     }
 
     @Autowired
-    public void setSuAdminService(SuAdminService suAdminService) {
+    public void setSuAdminService(AdminService suAdminService) {
         this.suAdminService = suAdminService;
     }
 
@@ -57,23 +57,45 @@ public class GroupController {
         this.groupSettingService = groupSettingService;
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/帮助")
-    public void showFunMenu(MessageEvent event) {
-        log.info("Start to Send Message");
-        MessageChainBuilder chainBuilder = new MessageChainBuilder()
-                .append("--------命令菜单--------\n")
-                .append("发送随机画师图片  /来张涩图\n")
-                .append("发送指定画师图片  /来张涩图 [画师P站ID]\n")
-                .append("向随机列表添加画师  /添加画师 [画师P站ID]\n")
-                .append("查看当前的随机列表  /画师列表\n")
-                .append("查找图片出处  /搜图 [图片]\n")
-                .append("给管理员留言  /留言 [留言内容]\n")
-                .append("查看关于信息  /关于");
-        event.getSubject().sendMessage(chainBuilder.build());
+    @Receive(type = ReceiveType.Group, msg = "/帮助", query = ReceiveQueryType.EqualOrFront)
+    public void showFunMenu(GroupMessageEvent event, ReceiveParameter parameter) {
+        String[] parameters = parameter.getParameters();
+        if (parameters.length == 0) {
+            log.info("Start to Send Message");
+            MessageChainBuilder chainBuilder = new MessageChainBuilder()
+                    .append("--------命令菜单--------\n")
+                    .append("发送随机画师图片  /来张涩图\n")
+                    .append("发送指定画师图片  /来张涩图 [画师P站ID]\n")
+                    .append("向随机列表添加画师  /添加画师 [画师P站ID]\n")
+                    .append("查看当前的随机列表  /画师列表\n")
+                    .append("更改机器人设置信息  /设置\n")
+                    .append("查找图片出处  /搜图 [图片]\n")
+                    .append("给管理员留言  /留言 [留言内容]\n")
+                    .append("查看关于信息  /关于\n")
+                    .append("---------------\n")
+                    .append("发送命令时注意不要加上[ ]");
+            event.getSubject().sendMessage(chainBuilder.build());
+            return;
+        }
+        if (parameters.length == 1) {
+            if ("设置".equals(parameters[0])) {
+                MessageChainBuilder chainBuilder = new MessageChainBuilder()
+                        .append("--------设置菜单--------\n")
+                        .append("是否允许发送R18内容  /设置 r18 [开/关]");
+                event.getSubject().sendMessage(chainBuilder.build());
+                return;
+            }
+        }
+        event.getSubject().sendMessage("参数不合法");
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/帮助 ")
+    public void showSettingHelp() {
+
     }
 
     @Receive(type = ReceiveType.Group, msg = "/搜图", query = ReceiveQueryType.Contain)
-    public void searchPicture(MessageEvent event) {
+    public void searchPicture(GroupMessageEvent event) {
         MessageChain chain = event.getMessage();
         Image image = null;
         for (SingleMessage message : chain) {
@@ -95,9 +117,9 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/来张涩图", query = ReceiveQueryType.EqualOrFront)
-    public void sendIllustration(MessageEvent event, ReceiveParameter parameter) {
+    public void sendIllustration(GroupMessageEvent event, ReceiveParameter parameter) {
         String[] parameters = parameter.getParameters();
-        if (parameters == null || parameters.length == 0) {
+        if (parameters.length == 0) {
             pixivService.sendRandPicture(event);
             return;
         }
@@ -114,7 +136,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/添加画师", query = ReceiveQueryType.Front)
-    public void setPixivMember(MessageEvent event, ReceiveParameter parameter) {
+    public void setPixivMember(GroupMessageEvent event, ReceiveParameter parameter) {
         String[] parameterStrings = parameter.getParameters();
         if (parameterStrings.length != 1) {
             event.getSubject().sendMessage("格式错误！");
@@ -129,9 +151,9 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/画师列表", query = ReceiveQueryType.EqualOrFront)
-    public void listPixivMember(MessageEvent event, ReceiveParameter parameter) {
+    public void listPixivMember(GroupMessageEvent event, ReceiveParameter parameter) {
         String[] parameterStrings = parameter.getParameters();
-        if (parameterStrings == null || parameterStrings.length == 0) {
+        if (parameterStrings.length == 0) {
             pixivService.listPixivMember(event, 1);
             return;
         }
@@ -148,7 +170,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "Y")
-    public void confirmAction(MessageEvent event) {
+    public void confirmAction(GroupMessageEvent event) {
         String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
         if (key == null) return;
         log.info("Find redis key: " + key);
@@ -158,7 +180,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "N")
-    public void cancelAction(MessageEvent event) {
+    public void cancelAction(GroupMessageEvent event) {
         String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
         if (key == null) return;
         if (redisService.isUnconfirmedPMember(key, event.getBot().getId(), event.getSender().getId())) {
@@ -167,15 +189,15 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/留言", query = ReceiveQueryType.Front)
-    public void send(MessageEvent event) {
+    public void send(GroupMessageEvent event) {
         Long admin = suAdminService.getSuperAdmin();
         if (admin == null) {
-            event.getSubject().sendMessage("向管理员发送消息时发生错误：管理员账号未配置");
+            event.getSubject().sendMessage("向超管发送消息时发生错误：管理员账号未配置");
             return;
         }
         Contact contact = event.getBot().getFriend(admin);
         if (contact == null) {
-            event.getSubject().sendMessage("向管理员发送消息时发生错误：找不到管理员");
+            event.getSubject().sendMessage("向超管发送消息时发生错误：找不到管理员");
             return;
         }
         log.info("Start to Send Message");
@@ -190,13 +212,13 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/设置", query = ReceiveQueryType.Front)
-    public void setSetting(MessageEvent event, ReceiveParameter receiveParameter) {
+    public void setSetting(GroupMessageEvent event, ReceiveParameter receiveParameter) {
         String[] parameters = receiveParameter.getParameters();
         if (parameters.length != 2) {
             event.getSubject().sendMessage("格式错误！");
             return;
         }
-        if (suAdminService.isSuperAdmin(event.getSender().getId())) {
+        if (suAdminService.isAdmin(event)) {
             groupSettingService.changeGroupSetting(event, parameters[0], parameters[1]);
         } else {
             event.getSubject().sendMessage("权限不足");
@@ -204,7 +226,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/关于")
-    public void showAbout(MessageEvent event) {
+    public void showAbout(GroupMessageEvent event) {
         log.info("Start to Send Message");
         event.getSubject().sendMessage(new PlainText("关于FurBot\n" +
                 "当前版本 " + appVersion +"\n" +

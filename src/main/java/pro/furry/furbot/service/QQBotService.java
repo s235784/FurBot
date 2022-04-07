@@ -38,5 +38,7 @@ public class QQBotService {
         }});
         bot.login();
         bot.getEventChannel().registerListenerHost(new GlobalEventHandler());
+        // EventChannel<Event> groupChannel = GlobalEventChannel.INSTANCE.filter(event -> event instanceof GroupMessageEvent);
+        // groupChannel.registerListenerHost(new GlobalEventHandler());
     }
 }
