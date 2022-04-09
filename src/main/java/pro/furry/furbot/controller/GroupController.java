@@ -30,7 +30,7 @@ public class GroupController {
     private RedisService redisService;
     private SauceService sauceService;
     private AdminService suAdminService;
-    private GroupSettingService groupSettingService;
+    private SettingService settingService;
 
     @Autowired
     public void setPixivService(PixivService pixivService) {
@@ -53,8 +53,8 @@ public class GroupController {
     }
 
     @Autowired
-    public void setGroupSettingService(GroupSettingService groupSettingService) {
-        this.groupSettingService = groupSettingService;
+    public void setGroupSettingService(SettingService groupSettingService) {
+        this.settingService = groupSettingService;
     }
 
     @Receive(type = ReceiveType.Group, msg = "/帮助", query = ReceiveQueryType.EqualOrFront)
@@ -136,7 +136,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/添加画师", query = ReceiveQueryType.Front)
-    public void setPixivMember(GroupMessageEvent event, ReceiveParameter parameter) {
+    public void addGroupPixivMember(GroupMessageEvent event, ReceiveParameter parameter) {
         String[] parameterStrings = parameter.getParameters();
         if (parameterStrings.length != 1) {
             event.getSubject().sendMessage("格式错误！");
@@ -148,6 +148,21 @@ public class GroupController {
             return;
         }
         pixivService.addPixivMember(event, pixivId);
+    }
+
+    @Receive(type = ReceiveType.Group, msg = "/删除画师", query = ReceiveQueryType.Front)
+    public void deleteGroupPixivMember(GroupMessageEvent event, ReceiveParameter parameter) {
+        String[] parameterStrings = parameter.getParameters();
+        if (parameterStrings.length != 1) {
+            event.getSubject().sendMessage("格式错误！");
+            return;
+        }
+        Long pixivId = PublicUtil.parseLong(parameterStrings[0]);
+        if (pixivId == null) {
+            event.getSubject().sendMessage("格式错误！");
+            return;
+        }
+        pixivService.deleteGroupPixivMember(event, pixivId);
     }
 
     @Receive(type = ReceiveType.Group, msg = "/画师列表", query = ReceiveQueryType.EqualOrFront)
@@ -174,8 +189,10 @@ public class GroupController {
         String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
         if (key == null) return;
         log.info("Find redis key: " + key);
-        if (redisService.isUnconfirmedPMember(key, event.getBot().getId(), event.getSender().getId())) {
-            pixivService.confirmPixivMember(event, key);
+        if (redisService.isAddPMember(key, event.getBot().getId(), event.getSender().getId())) {
+            pixivService.confirmAddPixivMember(event, key);
+        } else if (redisService.isDeletePMember(key, event.getBot().getId(), event.getSender().getId())) {
+            pixivService.confirmDeletePixivMember(event, key);
         }
     }
 
@@ -183,8 +200,10 @@ public class GroupController {
     public void cancelAction(GroupMessageEvent event) {
         String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
         if (key == null) return;
-        if (redisService.isUnconfirmedPMember(key, event.getBot().getId(), event.getSender().getId())) {
-            pixivService.cancelPixivMember(event, key);
+        if (redisService.isAddPMember(key, event.getBot().getId(), event.getSender().getId())) {
+            pixivService.cancelAddPixivMember(event, key);
+        } else if (redisService.isDeletePMember(key, event.getBot().getId(), event.getSender().getId())) {
+            pixivService.cancelDeletePixivMember(event, key);
         }
     }
 
@@ -213,13 +232,8 @@ public class GroupController {
 
     @Receive(type = ReceiveType.Group, msg = "/设置", query = ReceiveQueryType.Front)
     public void setSetting(GroupMessageEvent event, ReceiveParameter receiveParameter) {
-        String[] parameters = receiveParameter.getParameters();
-        if (parameters.length != 2) {
-            event.getSubject().sendMessage("格式错误！");
-            return;
-        }
         if (suAdminService.isAdmin(event)) {
-            groupSettingService.changeGroupSetting(event, parameters[0], parameters[1]);
+            settingService.setSetting(event, receiveParameter.getParameters());
         } else {
             event.getSubject().sendMessage("权限不足");
         }

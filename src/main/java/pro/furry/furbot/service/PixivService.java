@@ -155,10 +155,10 @@ public class PixivService {
         cache.put("pId", pid);
         cache.put("pAccount", account);
         cache.put("pName", name);
-        redisService.cacheUnconfirmedPMember(bId, event.getSender().getId(), cache);
+        redisService.cacheAddPMember(bId, gId, cache);
     }
 
-    public void confirmPixivMember(GroupMessageEvent event, String key) throws LocalException {
+    public void confirmAddPixivMember(GroupMessageEvent event, String key) throws LocalException {
         Map<Object, Object> cache = redisService.getHash(key);
         Long gId = PublicUtil.parseLong(cache.get("gId"));
         Long pId = PublicUtil.parseLong(cache.get("pId"));
@@ -172,12 +172,59 @@ public class PixivService {
         event.getSubject().sendMessage("已添加画师 " + pAccount + " (" + pId + ")");
     }
 
-    public void cancelPixivMember(GroupMessageEvent event, String key) {
+    public void cancelAddPixivMember(GroupMessageEvent event, String key) {
         String pId = redisService.getHashItem(key, "pId");
         String pAccount = redisService.getHashItem(key, "pAccount");
         redisService.deleteCache(key);
         if (pId != null && pAccount != null) {
             event.getSubject().sendMessage("已取消添加画师 " + pAccount + " (" + pId + ")");
+        }
+    }
+
+    public void deleteGroupPixivMember(GroupMessageEvent event, Long pId) throws LocalException {
+        Long bId = event.getBot().getId();
+        Long gId = event.getGroup().getId();
+        if (!dbService.isGroupAddedPMember(gId, pId)) {
+            event.getSubject().sendMessage("这位画师还没有添加呢");
+            return;
+        }
+
+        PixivMember member = dbService.getPixivMemberInfo(pId);
+        MessageChain chain = new MessageChainBuilder()
+                .append(new PlainText("请确认画师信息\n"))
+                .append(new PlainText("ID：" + pId + "\n"))
+                .append(new PlainText("昵称：" + member.getPixivName() + "\n"))
+                .append(new PlainText("用户名：" + member.getPixivAccount() + "\n"))
+                .append(new PlainText("\n确认删除请回复Y，取消删除请回复N"))
+                .build();
+        event.getGroup().sendMessage(chain);
+
+        Map<String, Object> cache = new HashMap<>();
+        cache.put("gId", gId);
+        cache.put("pId", pId);
+        cache.put("pAccount", member.getPixivAccount());
+        redisService.cacheDeletePMember(bId, gId, cache);
+    }
+
+    public void confirmDeletePixivMember(GroupMessageEvent event, String key) throws LocalException {
+        Map<Object, Object> cache = redisService.getHash(key);
+        Long gId = PublicUtil.parseLong(cache.get("gId"));
+        Long pId = PublicUtil.parseLong(cache.get("pId"));
+        String pAccount = String.valueOf(cache.get("pAccount"));
+        if (gId == null || pId == null) {
+            throw new LocalException("获取画师信息时发生错误");
+        }
+        dbService.deletePixivMember(gId, pId);
+        redisService.deleteCache(key);
+        event.getSubject().sendMessage("已删除画师 " + pAccount + " (" + pId + ")");
+    }
+
+    public void cancelDeletePixivMember(GroupMessageEvent event, String key) {
+        String pId = redisService.getHashItem(key, "pId");
+        String pAccount = redisService.getHashItem(key, "pAccount");
+        redisService.deleteCache(key);
+        if (pId != null && pAccount != null) {
+            event.getSubject().sendMessage("已取消删除画师 " + pAccount + " (" + pId + ")");
         }
     }
 

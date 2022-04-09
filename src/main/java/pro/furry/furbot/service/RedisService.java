@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pro.furry.furbot.type.GroupSettingType;
 import pro.furry.furbot.type.RedisActionType;
 import pro.furry.furbot.util.RedisUtil;
 
@@ -18,10 +19,16 @@ import java.util.Set;
 @Service
 public class RedisService {
     private RedisUtil redisUtil;
+    private SettingService settingService;
 
     @Autowired
     public void setRedisUtil(RedisUtil redisUtil) {
         this.redisUtil = redisUtil;
+    }
+
+    @Autowired
+    public void setSettingService(SettingService settingService) {
+        this.settingService = settingService;
     }
 
     public String getUnconfirmedAction(Long bId, Long sId) {
@@ -31,18 +38,28 @@ public class RedisService {
         return keys.iterator().next();
     }
 
-    public void cacheUnconfirmedPMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
-        log.info("Set UnconfirmedPMember Cache:" + cache);
-        redisUtil.hashSet(getFormatKey(bId, RedisActionType.Unconfirmed_Pixiv_Member, sId), cache, 60);
+    public void cacheAddPMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
+        log.info("Set AddPMember Cache:" + cache);
+        redisUtil.hashSet(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, sId), cache, 60);
     }
 
-    public boolean isUnconfirmedPMember(@NotNull String key, Long bId, Long sId) {
-        return key.equals(getFormatKey(bId, RedisActionType.Unconfirmed_Pixiv_Member, sId));
+    public boolean isAddPMember(@NotNull String key, Long bId, Long sId) {
+        return key.equals(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, sId));
+    }
+
+    public void cacheDeletePMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
+        log.info("Set DeletePMember Cache:" + cache);
+        redisUtil.hashSet(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, sId), cache, 60);
+    }
+
+    public boolean isDeletePMember(@NotNull String key, Long bId, Long sId) {
+        return key.equals(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, sId));
     }
 
     public void cacheGroupGotPicture(Long bId, Long gId) {
         log.info("Set GroupGotPicture Cache:" + gId);
-        redisUtil.set(getFormatKey(bId, RedisActionType.Group_Got_Picture, gId), null, 60*5);
+        Long time = settingService.getGroupSettingAsLong(gId, GroupSettingType.Picture_Time_Limit);
+        redisUtil.set(getFormatKey(bId, RedisActionType.Group_Got_Picture, gId), null, time);
     }
 
     public boolean isGroupGotPicture(Long bId, Long gId) {

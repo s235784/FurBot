@@ -15,15 +15,15 @@ import pro.furry.furbot.util.PublicUtil;
  */
 @Service
 public class AdminService {
-    private DBService dbService;
+    private SettingService settingService;
 
     @Autowired
-    public void setDBService(DBService dbService) {
-        this.dbService = dbService;
+    public void setSettingService(SettingService settingService) {
+        this.settingService = settingService;
     }
 
     public boolean isSuperAdmin(Long uId) {
-        return String.valueOf(uId).equals(dbService.getGlobalSetting(GlobalSettingType.Super_Admin_QQ));
+        return String.valueOf(uId).equals(settingService.getGlobalSetting(GlobalSettingType.Super_Admin_QQ));
     }
 
     public boolean isAdmin(@NotNull GroupMessageEvent event) {
@@ -35,6 +35,6 @@ public class AdminService {
 
     @Nullable
     public Long getSuperAdmin() {
-        return PublicUtil.parseLong(dbService.getGlobalSetting(GlobalSettingType.Super_Admin_QQ));
+        return PublicUtil.parseLong(settingService.getGlobalSetting(GlobalSettingType.Super_Admin_QQ));
     }
 }

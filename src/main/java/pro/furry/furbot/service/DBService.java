@@ -82,6 +82,13 @@ public class DBService {
         }
     }
 
+    public void deletePixivMember(Long gId, Long pId) {
+        QueryWrapper<GroupSettingPixiv> pixivQueryWrapper = new QueryWrapper<>();
+        pixivQueryWrapper.eq("group_id", gId)
+                .eq("pixiv_id", pId);
+        groupSettingPixivMapper.delete(pixivQueryWrapper);
+    }
+
     public boolean isGroupAddedPMember(Long gId, Long pId) {
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
         groupSettingPixivQueryWrapper.eq("group_id", gId)
@@ -107,6 +114,12 @@ public class DBService {
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
         groupSettingPixivQueryWrapper.eq("group_id", gId);
         return groupSettingPixivMapper.selectCount(groupSettingPixivQueryWrapper);
+    }
+
+    public PixivMember getPixivMemberInfo(Long pId) {
+        QueryWrapper<PixivMember> pixivMemberQueryWrapper = new QueryWrapper<>();
+        pixivMemberQueryWrapper.eq("pixiv_id", pId);
+        return pixivMemberMapper.selectOne(pixivMemberQueryWrapper);
     }
 
     public String getApiURL(@NotNull ApiType apiName) throws LocalException {
@@ -181,26 +194,22 @@ public class DBService {
         }
     }
 
-    public String getGroupSetting(Long gId, @NotNull GroupSettingType setting) {
+    public String getGroupSetting(Long gId, String name) {
         QueryWrapper<GroupSetting> groupSettingQueryWrapper = new QueryWrapper<>();
         groupSettingQueryWrapper.eq("group_id", String.valueOf(gId))
-                .eq("setting_name", setting.getSettingName());
+                .eq("setting_name", name);
         GroupSetting groupSetting = groupSettingMapper.selectOne(groupSettingQueryWrapper);
-        if (groupSetting == null || groupSetting.getSettingValue() == null) {
-            return setting.getDefaultValue();
-        } else {
-            return groupSetting.getSettingValue();
-        }
+        return groupSetting == null ? null : groupSetting.getSettingValue();
     }
 
-    public void setGroupSetting(Long gId, @NotNull GroupSettingType setting, String value) {
-        log.info("Set GroupSetting, Name: " + setting.getSettingName() + ", Value: " + value);
+    public void setGroupSetting(Long gId, String name, String value) {
+        log.info("Set GroupSetting, Name: " + name + ", Value: " + value);
         QueryWrapper<GroupSetting> groupSettingQueryWrapper = new QueryWrapper<>();
         groupSettingQueryWrapper.eq("group_id", String.valueOf(gId))
-                .eq("setting_name", setting.getSettingName());
+                .eq("setting_name", name);
         GroupSetting groupSetting = new GroupSetting();
         groupSetting.setGroupId(String.valueOf(gId));
-        groupSetting.setSettingName(setting.getSettingName());
+        groupSetting.setSettingName(name);
         groupSetting.setSettingValue(value);
         if (groupSettingMapper.exists(groupSettingQueryWrapper)) {
             groupSettingMapper.update(groupSetting, groupSettingQueryWrapper);

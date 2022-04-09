@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 @AllArgsConstructor
 public enum GroupSettingType {
-    Show_R18_Content("r18", "show_r18_content", "false", Boolean.class);
+    Show_R18_Content("r18", "show_r18_content", "false", Boolean.class),
+    Picture_Time_Limit("time_limit", "picture_time_limit", "300", String.class);
     private final String showName;
     private final String settingName;
     private final String defaultValue;
@@ -25,11 +26,5 @@ public enum GroupSettingType {
             }
         }
         return null;
-    }
-
-    @Nullable
-    public static Class<?> getValueType(String settingName) {
-        GroupSettingType type = getInstance(settingName);
-        return type == null ? null : type.getValueType();
     }
 }

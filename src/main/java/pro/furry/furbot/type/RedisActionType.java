@@ -11,7 +11,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RedisActionType {
     Unknown_Action("*"),
-    Unconfirmed_Pixiv_Member("UCPM"),
+    Add_Pixiv_Member("APM"),
+    Delete_Pixiv_Member("DPM"),
     Group_Got_Picture("GGP"),
     Group_Searched_Picture("GSP");
 

@@ -34,12 +34,17 @@ import java.util.Map;
 @Slf4j
 @Service
 public class HttpService {
-
     private DBService dbService;
+    private SettingService settingService;
 
     @Autowired
     public void setDBService(DBService dbService) {
         this.dbService = dbService;
+    }
+
+    @Autowired
+    public void setSettingService(SettingService settingService) {
+        this.settingService = settingService;
     }
 
     public Map<String, String> getPixivMemberInfo(Long pid) throws LocalException {
@@ -81,7 +86,7 @@ public class HttpService {
         boolean nsfw = isR18(illustration);
 
         // 是否允许发布R18内容
-        String r18 = dbService.getGroupSetting(gid, GroupSettingType.Show_R18_Content);
+        String r18 = settingService.getGroupSetting(gid, GroupSettingType.Show_R18_Content);
         if (nsfw && !PublicUtil.parseBoolean(r18)) {
             // 重新选张图片
             if (illustrations.size() == 1) {
