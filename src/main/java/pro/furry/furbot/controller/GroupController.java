@@ -89,11 +89,6 @@ public class GroupController {
         event.getSubject().sendMessage("参数不合法");
     }
 
-    @Receive(type = ReceiveType.Group, msg = "/帮助 ")
-    public void showSettingHelp() {
-
-    }
-
     @Receive(type = ReceiveType.Group, msg = "/搜图", query = ReceiveQueryType.Contain)
     public void searchPicture(GroupMessageEvent event) {
         MessageChain chain = event.getMessage();
@@ -188,7 +183,7 @@ public class GroupController {
     public void confirmAction(GroupMessageEvent event) {
         String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
         if (key == null) return;
-        log.info("Find redis key: " + key);
+        log.info("Find redis key: {}", key);
         if (redisService.isAddPMember(key, event.getBot().getId(), event.getSender().getId())) {
             pixivService.confirmAddPixivMember(event, key);
         } else if (redisService.isDeletePMember(key, event.getBot().getId(), event.getSender().getId())) {

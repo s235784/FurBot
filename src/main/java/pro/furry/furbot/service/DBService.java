@@ -12,7 +12,6 @@ import pro.furry.furbot.mapper.*;
 import pro.furry.furbot.pojo.db.*;
 import pro.furry.furbot.type.ApiType;
 import pro.furry.furbot.type.GlobalSettingType;
-import pro.furry.furbot.type.GroupSettingType;
 import pro.furry.furbot.util.PublicUtil;
 
 import java.util.List;
@@ -57,8 +56,7 @@ public class DBService {
     }
 
     public void addPixivMember(Long gId, Long pId, String account, String name) {
-        log.info("向群聊 " + gId + " 添加画师 " + pId);
-
+        log.info("向群聊 {} 添加画师 {}", gId, pId);
         PixivMember member = new PixivMember();
         member.setPixivId(pId);
         member.setPixivAccount(account);
@@ -147,7 +145,7 @@ public class DBService {
     }
 
     public Page<GroupSettingPixiv> getGroupPMemberByPage(Long gId, int page) {
-        log.info("Get Pixiv Member by Page, gId: " + gId + ", Page: " + page);
+        log.info("Get Pixiv Member by Page, gId: {}, Page: {}", gId, page);
 
         QueryWrapper<GroupSettingPixiv> groupSettingPixivQueryWrapper = new QueryWrapper<>();
         groupSettingPixivQueryWrapper.eq("group_id", String.valueOf(gId));
@@ -203,7 +201,7 @@ public class DBService {
     }
 
     public void setGroupSetting(Long gId, String name, String value) {
-        log.info("Set GroupSetting, Name: " + name + ", Value: " + value);
+        log.info("Set Group, Name: {}, Id: {}, Value: {}", name, gId, value);
         QueryWrapper<GroupSetting> groupSettingQueryWrapper = new QueryWrapper<>();
         groupSettingQueryWrapper.eq("group_id", String.valueOf(gId))
                 .eq("setting_name", name);

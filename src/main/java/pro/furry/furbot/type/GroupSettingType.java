@@ -11,12 +11,14 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 @AllArgsConstructor
 public enum GroupSettingType {
-    Show_R18_Content("r18", "show_r18_content", "false", Boolean.class),
-    Picture_Time_Limit("time_limit", "picture_time_limit", "300", String.class);
+    Enable_Bot("enable", "enable_bot", "false", Boolean.class, ReceiveType.User),
+    Show_R18_Content("r18", "show_r18_content", "false", Boolean.class, ReceiveType.Group),
+    Picture_Time_Limit("time_limit", "picture_time_limit", "300", String.class, ReceiveType.User);
     private final String showName;
     private final String settingName;
     private final String defaultValue;
     private final Class<?> valueType;
+    private final ReceiveType receiveType;
 
     @Nullable
     public static GroupSettingType getInstance(String showName) {

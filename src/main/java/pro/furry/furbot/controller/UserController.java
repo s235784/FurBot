@@ -55,8 +55,8 @@ public class UserController {
             event.getSubject().sendMessage("向管理员发送消息时发生错误：找不到管理员");
             return;
         }
-        log.info("收到留言消息, 来自：" + event.getSender().getId());
-        log.info("内容：" + event.getMessage().contentToString());
+        log.info("收到留言消息, 来自：{}", event.getSender().getId());
+        log.info("内容：{}", event.getMessage().contentToString());
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("您有一条新的留言 来自\n用户：")
                 .append(String.valueOf(event.getSender().getId()))
@@ -91,8 +91,8 @@ public class UserController {
             event.getSubject().sendMessage("无法向该用户发送消息");
             return;
         }
-        log.info("向用户发送回复, 用户：" + parameters[0]);
-        log.info("内容：" + parameters[1]);
+        log.info("向用户发送回复, 用户：{}", parameters[0]);
+        log.info("内容：{}", parameters[1]);
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("来自管理员的消息\n---------------\n")
                 .append(parameters[1]);

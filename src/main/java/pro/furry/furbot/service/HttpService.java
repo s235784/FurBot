@@ -48,7 +48,7 @@ public class HttpService {
     }
 
     public Map<String, String> getPixivMemberInfo(Long pid) throws LocalException {
-        log.info("Get Pixiv Member Information, PID: " + pid);
+        log.info("Get Pixiv Member Information, PID: {}", pid);
         Map<String, String> data = new HashMap<>();
         data.put("id", String.valueOf(pid));
         String url = dbService.getApiURL(ApiType.Hibi_Pixiv_Member);
@@ -67,7 +67,7 @@ public class HttpService {
 
     public Map<String, String> getRandPMemberWork(Long gid, Long pid, int count, boolean isSpecific)
             throws LocalException  {
-        log.info("Get Pixiv Member Illustration, PID: " + pid);
+        log.info("Get Pixiv Member Illustration, PID: {}", pid);
         Map<String, String> data = new HashMap<>();
         data.put("id", String.valueOf(pid));
         String url = dbService.getApiURL(ApiType.Hibi_Pixiv_Member_Illust);
@@ -156,7 +156,7 @@ public class HttpService {
     }
 
     public InputStream getPictureFromFurBotAPI(String pictureURL, RefererType referer) throws LocalException {
-        log.info("Get Picture from FurBotAPI, URL: " + pictureURL);
+        log.info("Get Picture from FurBotAPI, URL: {}", pictureURL);
         Map<String, String> data = new HashMap<>();
         data.put("url", pictureURL);
         data.put("from", referer.getReferer());
@@ -170,7 +170,7 @@ public class HttpService {
     }
 
     public InputStream getPictureFromURL(String url) throws LocalException {
-        log.info("Get Picture from URL: " + url);
+        log.info("Get Picture from URL: {}", url);
         Resource resource = sendGetRequest(url, null, Resource.class, RefererType.None);
         try {
             return resource.getInputStream();
@@ -243,7 +243,7 @@ public class HttpService {
                 url = url.substring(0, url.length() - 1);
             }
         }
-        log.info("Send Get Request, URL: " + url);
+        log.info("Send Get Request, URL: {}", url);
         HttpHeaders headers = new HttpHeaders();
         headers.add("referer", referer.getReferer());
         try {

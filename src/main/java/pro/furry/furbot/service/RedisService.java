@@ -39,7 +39,7 @@ public class RedisService {
     }
 
     public void cacheAddPMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
-        log.info("Set AddPMember Cache:" + cache);
+        log.info("Set AddPMember Cache: {}", cache);
         redisUtil.hashSet(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, sId), cache, 60);
     }
 
@@ -48,7 +48,7 @@ public class RedisService {
     }
 
     public void cacheDeletePMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
-        log.info("Set DeletePMember Cache:" + cache);
+        log.info("Set DeletePMember Cache: {}", cache);
         redisUtil.hashSet(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, sId), cache, 60);
     }
 
@@ -57,7 +57,7 @@ public class RedisService {
     }
 
     public void cacheGroupGotPicture(Long bId, Long gId) {
-        log.info("Set GroupGotPicture Cache:" + gId);
+        log.info("Set GroupGotPicture Cache: {}", gId);
         Long time = settingService.getGroupSettingAsLong(gId, GroupSettingType.Picture_Time_Limit);
         redisUtil.set(getFormatKey(bId, RedisActionType.Group_Got_Picture, gId), null, time);
     }
@@ -67,7 +67,7 @@ public class RedisService {
     }
 
     public void cacheGroupSearchedPicture(Long bId, Long gId) {
-        log.info("Set GroupSearchPicture Cache:" + gId);
+        log.info("Set GroupSearchPicture Cache: {}", gId);
         redisUtil.set(getFormatKey(bId, RedisActionType.Group_Searched_Picture, gId), null, 60*10);
     }
 

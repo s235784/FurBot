@@ -1,6 +1,8 @@
 package pro.furry.furbot.service;
 
 import lombok.extern.slf4j.Slf4j;
+import net.mamoe.mirai.contact.Group;
+import net.mamoe.mirai.contact.User;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,29 +27,48 @@ public class SettingService {
     }
 
     public void setSetting(MessageEvent event, String @NotNull [] parameters) {
-        try {
-            GroupSettingType groupSettingType = GroupSettingType.getInstance(parameters[0]);
-            if (groupSettingType == null) {
-                event.getSubject().sendMessage("找不到这个设置");
-                return;
-            } else {
-                switch (groupSettingType) {
-                    case Show_R18_Content:
-                        if (parameters.length != 2) {
-                            event.getSubject().sendMessage("格式错误！");
-                            return;
-                        }
-                        setGroupSetting(event.getSubject().getId(), groupSettingType, parameters[1]);
-                        break;
-                    case Picture_Time_Limit:
-                        if (parameters.length != 3) {
-                            event.getSubject().sendMessage("格式错误！");
-                            return;
-                        }
-                        Long gId = PublicUtil.parseLong(parameters[0]);
-                        setGroupSetting(gId, groupSettingType, parameters[1]);
-                        break;
+        GroupSettingType groupSettingType = GroupSettingType.getInstance(parameters[0]);
+        if (groupSettingType == null) {
+            event.getSubject().sendMessage("没有这个设置呢");
+            return;
+        }
+        // 判断设置的类型
+        switch (groupSettingType.getReceiveType()) {
+            case User:
+                if (!(event.getSubject() instanceof User)) {
+                    event.getSubject().sendMessage("没有这个设置呢");
+                    return;
                 }
+                break;
+            case Group:
+                if (!(event.getSubject() instanceof Group)) {
+                    event.getSubject().sendMessage("没有这个设置呢");
+                    return;
+                }
+                break;
+        }
+        try {
+            switch (groupSettingType) {
+                case Show_R18_Content:
+                    if (parameters.length != 2) {
+                        event.getSubject().sendMessage("参数格式错误！");
+                        return;
+                    }
+                    setGroupSetting(event.getSubject().getId(), groupSettingType, parameters[1]);
+                    break;
+                case Enable_Bot:
+                case Picture_Time_Limit:
+                    if (parameters.length != 3) {
+                        event.getSubject().sendMessage("参数格式错误！");
+                        return;
+                    }
+                    Long gId = PublicUtil.parseLong(parameters[1]);
+                    if (gId == null) {
+                        event.getSubject().sendMessage("群号格式错误");
+                        return;
+                    }
+                    setGroupSetting(gId, groupSettingType, parameters[2]);
+                    break;
             }
             event.getSubject().sendMessage("设置已更新");
         } catch (LocalException e) {
@@ -55,7 +76,7 @@ public class SettingService {
         }
     }
 
-    private void setGroupSetting(Long gId, @NotNull GroupSettingType type, String value) throws LocalException {
+    private void setGroupSetting(@NotNull Long gId, @NotNull GroupSettingType type, String value) throws LocalException {
         if (Boolean.class.isAssignableFrom(type.getValueType())) {
             if (value.equals("开") || value.equalsIgnoreCase("true")) {
                 dbService.setGroupSetting(gId, type.getSettingName(), "true");
@@ -90,6 +111,10 @@ public class SettingService {
         } else {
             return value;
         }
+    }
+
+    public Boolean getGroupSettingAsBoolean(Long gId, @NotNull GroupSettingType setting) {
+        return "true".equals(getGroupSetting(gId, setting));
     }
 
     public String getGlobalSetting(@NotNull GlobalSettingType setting) {

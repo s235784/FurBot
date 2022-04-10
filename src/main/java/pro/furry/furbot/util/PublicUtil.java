@@ -1,7 +1,5 @@
 package pro.furry.furbot.util;
 
-import pro.furry.furbot.exception.LocalException;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

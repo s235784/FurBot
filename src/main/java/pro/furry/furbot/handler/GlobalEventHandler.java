@@ -11,6 +11,8 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import pro.furry.furbot.annotation.Receive;
 import pro.furry.furbot.exception.LocalException;
+import pro.furry.furbot.service.SettingService;
+import pro.furry.furbot.type.GroupSettingType;
 import pro.furry.furbot.type.ReceiveType;
 import pro.furry.furbot.pojo.ReceiveParameter;
 import pro.furry.furbot.util.ReceiveReflectUtil;
@@ -70,7 +72,8 @@ public class GlobalEventHandler extends SimpleListenerHost {
     private void checkReceiveType(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
             throws Exception {
         if (event.getSubject() instanceof Group && annotation.type() == ReceiveType.Group) {
-            invokeMethod(clazz, method, event, annotation);
+            if (isEnableBot(event.getSubject().getId()))
+                invokeMethod(clazz, method, event, annotation);
         } else if (event.getSubject() instanceof User && annotation.type() == ReceiveType.User) {
             invokeMethod(clazz, method, event, annotation);
         }
@@ -78,7 +81,7 @@ public class GlobalEventHandler extends SimpleListenerHost {
 
     private void invokeMethod(Class<?> clazz, Method method, MessageEvent event, Receive annotation)
             throws Exception {
-        log.info("Invoke " + method.getName() + "(), Id: " + event.getSubject().getId());
+        log.info("Invoke {}(), Id: {}",method.getName() , event.getSubject().getId());
         Parameter[] parameters = method.getParameters();
         final int length = parameters.length;
         if (length > 0) {
@@ -119,5 +122,10 @@ public class GlobalEventHandler extends SimpleListenerHost {
                 }
             }
         }
+    }
+
+    private boolean isEnableBot(Long gId) {
+        SettingService settingService = SpringContextUtil.getBean(SettingService.class);
+        return settingService.getGroupSettingAsBoolean(gId, GroupSettingType.Enable_Bot);
     }
 }

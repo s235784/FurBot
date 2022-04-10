@@ -10,7 +10,7 @@
     </parent>
     <groupId>pro.furry</groupId>
     <artifactId>FurBot</artifactId>
-    <version>1.0.1-RELEASE</version>
+    <version>1.0.2-RELEASE</version>
     <name>FurBot</name>
     <description>FurBot</description>
     <properties>
@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.79</version>
+            <version>1.2.80</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>

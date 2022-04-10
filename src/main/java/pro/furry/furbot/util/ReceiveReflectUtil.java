@@ -29,7 +29,7 @@ public class ReceiveReflectUtil {
             Method[] methods = aClass.getDeclaredMethods();
             for (Method method : methods) {
                 if (method.isAnnotationPresent(Receive.class)) {
-                    log.info("Scanned " + method.getName() + "()");
+                    log.info("Scanned {}()", method.getName());
                     receiveMethods.add(new Object[]{method, aClass});
                 }
             }
