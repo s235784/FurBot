@@ -5,6 +5,7 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.stereotype.Controller;
 import pro.furry.furbot.annotation.Receive;
 import pro.furry.furbot.exception.LocalException;
+import pro.furry.furbot.pojo.MethodContext;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.Map;
  */
 @Slf4j
 public class ReceiveReflectUtil {
-    private static List<Object[]> receiveMethods;
+    private static List<MethodContext> receiveMethods;
 
     public static void scanReceiveMethods() {
         log.info("Start to scan Receive Annotation");
@@ -30,13 +31,13 @@ public class ReceiveReflectUtil {
             for (Method method : methods) {
                 if (method.isAnnotationPresent(Receive.class)) {
                     log.info("Scanned {}()", method.getName());
-                    receiveMethods.add(new Object[]{method, aClass});
+                    receiveMethods.add(new MethodContext(method, aClass));
                 }
             }
         }
     }
 
-    public static List<Object[]> getReceiveMethods() throws LocalException {
+    public static List<MethodContext> getReceiveMethods() throws LocalException {
         if (receiveMethods == null) {
             throw new LocalException("反射调用列表为null");
         }

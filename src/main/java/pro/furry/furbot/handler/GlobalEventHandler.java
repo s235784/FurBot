@@ -11,6 +11,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import pro.furry.furbot.annotation.Receive;
 import pro.furry.furbot.exception.LocalException;
+import pro.furry.furbot.pojo.MethodContext;
 import pro.furry.furbot.service.SettingService;
 import pro.furry.furbot.type.GroupSettingType;
 import pro.furry.furbot.type.ReceiveType;
@@ -39,30 +40,30 @@ public class GlobalEventHandler extends SimpleListenerHost {
     @NotNull
     @EventHandler
     public ListeningStatus onMessage(@NotNull MessageEvent event) throws Exception {
-        for (Object[] objects : ReceiveReflectUtil.getReceiveMethods()) {
-            Method method = (Method) objects[0];
+        for (MethodContext methodContext : ReceiveReflectUtil.getReceiveMethods()) {
+            Method method = methodContext.getMethod();
             String content = event.getMessage().contentToString();
             Receive annotation = method.getAnnotation(Receive.class);
             switch (annotation.query()) {
                 case Equal:
                     if (content.equals(annotation.msg()))
-                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                        checkReceiveType(methodContext.getAClass(), method, event, annotation);
                     break;
                 case Front:
                     if (RegexUtil.matchTextAfterText(content, annotation.msg()))
-                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                        checkReceiveType(methodContext.getAClass(), method, event, annotation);
                     break;
                 case Behind:
                     // todo
                     break;
                 case Contain:
                     if (RegexUtil.matchTextContainText(content, annotation.msg()))
-                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                        checkReceiveType(methodContext.getAClass(), method, event, annotation);
                     break;
                 case EqualOrFront:
                     if (content.equals(annotation.msg()) ||
                             RegexUtil.matchTextAfterText(content, annotation.msg()))
-                        checkReceiveType((Class<?>) objects[1], method, event, annotation);
+                        checkReceiveType(methodContext.getAClass(), method, event, annotation);
                     break;
             }
         }
