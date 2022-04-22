@@ -67,6 +67,7 @@ public class GroupController {
                     .append("发送随机画师图片  /来张涩图\n")
                     .append("发送指定画师图片  /来张涩图 [画师P站ID]\n")
                     .append("向随机列表添加画师  /添加画师 [画师P站ID]\n")
+                    .append("向随机列表删除画师  /删除画师 [画师P站ID]\n")
                     .append("查看当前的随机列表  /画师列表\n")
                     .append("更改机器人设置信息  /设置\n")
                     .append("查找图片出处  /搜图 [图片]\n")
@@ -181,13 +182,14 @@ public class GroupController {
 
     @Receive(type = ReceiveType.Group, msg = "Y")
     public void confirmAction(GroupMessageEvent event) {
-        String key = redisService.getUnconfirmedAction(event.getBot().getId(), event.getSender().getId());
+        Long gId = event.getGroup().getId();
+        String key = redisService.getUnconfirmedAction(event.getBot().getId(), gId);
         if (key == null) return;
         log.info("Find redis key: {}", key);
-        if (redisService.isAddPMember(key, event.getBot().getId(), event.getSender().getId())) {
-            pixivService.confirmAddPixivMember(event, key);
-        } else if (redisService.isDeletePMember(key, event.getBot().getId(), event.getSender().getId())) {
-            pixivService.confirmDeletePixivMember(event, key);
+        if (redisService.isAddPMember(key, event.getBot().getId(), gId)) {
+            pixivService.confirmAddPixivMember(event, key, gId);
+        } else if (redisService.isDeletePMember(key, event.getBot().getId(), gId)) {
+            pixivService.confirmDeletePixivMember(event, key, gId);
         }
     }
 
@@ -217,7 +219,7 @@ public class GroupController {
         log.info("Start to Send Message");
         MessageChainBuilder chainBuilder = new MessageChainBuilder()
                 .append("您有一条新的留言 来自\n群聊：")
-                .append(String.valueOf(event.getSubject().getId()))
+                .append(String.valueOf(event.getGroup().getId()))
                 .append("用户：")
                 .append(String.valueOf(event.getSender().getId()))
                 .append("\n---------------\n")

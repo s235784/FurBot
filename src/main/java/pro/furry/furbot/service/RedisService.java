@@ -43,8 +43,8 @@ public class RedisService {
         redisUtil.hashSet(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, sId), cache, 60);
     }
 
-    public boolean isAddPMember(@NotNull String key, Long bId, Long sId) {
-        return key.equals(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, sId));
+    public boolean isAddPMember(@NotNull String key, Long bId, Long gId) {
+        return key.equals(getFormatKey(bId, RedisActionType.Add_Pixiv_Member, gId));
     }
 
     public void cacheDeletePMember(Long bId, Long sId, @NotNull Map<String, Object> cache) {
@@ -52,8 +52,8 @@ public class RedisService {
         redisUtil.hashSet(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, sId), cache, 60);
     }
 
-    public boolean isDeletePMember(@NotNull String key, Long bId, Long sId) {
-        return key.equals(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, sId));
+    public boolean isDeletePMember(@NotNull String key, Long bId, Long gId) {
+        return key.equals(getFormatKey(bId, RedisActionType.Delete_Pixiv_Member, gId));
     }
 
     public void cacheGroupGotPicture(Long bId, Long gId) {
