@@ -205,7 +205,7 @@ public class GroupController {
     }
 
     @Receive(type = ReceiveType.Group, msg = "/留言", query = ReceiveQueryType.Front)
-    public void send(GroupMessageEvent event) {
+    public void sendMessageToAdmin(GroupMessageEvent event) {
         Long admin = suAdminService.getSuperAdmin();
         if (admin == null) {
             event.getSubject().sendMessage("向超管发送消息时发生错误：管理员账号未配置");

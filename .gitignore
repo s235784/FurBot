@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+log/
 data/
 src/main/resources/application-dev.yml
 src/main/resources/application-prod.yml
@@ -35,3 +36,4 @@ build/
 
 ### VS Code ###
 .vscode/
+*.log

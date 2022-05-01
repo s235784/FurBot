@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="false" scanPeriod="600 seconds">
+    <!-- 设置上下文的名称 -->
+    <contextName>furbot-log</contextName>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 默认日志路径 -->
+    <property name="LOG_PATH" value="log"/>
+    <!-- 无色日志输出格式 -->
+    <property name="DEFAULT_PATTERN_NONE_COLOR"
+              value="%date{yyyy-MM-dd HH:mm:ss.SSS}  %-5level --- [%15thread] %40.40logger : %message %n%exception{full}"/>
+
+    <!-- 控制台输出appender -->
+    <appender name="CONSOLE_DEFAULT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 控制最低日志输出级别 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 文件日志记录 -->
+    <appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 输出INFO及以上级别日志 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <!--日志文档输出格式-->
+        <encoder>
+            <pattern>${DEFAULT_PATTERN_NONE_COLOR}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <!--日志记录器的滚动策略、按日期记录-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 每天日志归档路径以及格式 -->
+            <fileNamePattern>${LOG_PATH}/furbot-log.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!--日志文档保留天数-->
+            <maxHistory>7</maxHistory>
+            <!-- 单个文件的最大内存 -->
+            <maxFileSize>100MB</maxFileSize>
+            <!-- 用来指定日志文件的上限大小 -->
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 异常日志文件记录 -->
+    <appender name="EXCEPTION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 只输出ERROR级别日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--日志文档输出格式-->
+        <encoder>
+            <pattern>${DEFAULT_PATTERN_NONE_COLOR}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <!--日志记录器的滚动策略、按日期记录-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 每天日志归档路径以及格式 -->
+            <fileNamePattern>${LOG_PATH}/furbot-exception.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!--日志文档保留天数-->
+            <maxHistory>14</maxHistory>
+            <!-- 单个文件的最大内存 -->
+            <maxFileSize>100MB</maxFileSize>
+            <!-- 用来指定日志文件的上限大小 -->
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 指定开发环境的日志类型 -->
+    <springProfile  name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_DEFAULT"/>
+        </root>
+    </springProfile>
+
+    <!-- 指定生产环境基础的日志类型 -->
+    <springProfile  name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_DEFAULT"/>
+            <appender-ref ref="EXCEPTION_FILE"/>
+            <appender-ref ref="LOG_FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>
